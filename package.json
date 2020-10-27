@@ -6,6 +6,7 @@
   "scripts": {
     "test": "mocha --require test/setup.js",
     "dev": "nodemon src/server.js",
+    "migrate": "postgrator --config postgrator-config.js",
     "start": "node src/server.js"
   },
   "keywords": [],
@@ -19,8 +20,13 @@
     "helmet": "^4.1.1",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.5",
+    "pg": "^8.4.2",
+    "supertest": "^5.0.0",
     "uuid": "^8.3.1",
     "valid-url": "^1.0.9",
     "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "postgrator-cli": "^3.2.0"
   }
 }
