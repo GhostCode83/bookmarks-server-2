@@ -23,5 +23,5 @@ VALUES
 ('Learn web development', 
 'https://developer.mozilla.org/en-US/docs/Learn', 
 'Welcome to the MDN learning area. This set of articles aims to provide complete beginners to web development with all that they need to start coding websites.', 
-3
+5
 )
