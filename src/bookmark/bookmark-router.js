@@ -1,105 +1,65 @@
 const express = require('express')
-const { v4: uuid } = require('uuid')
-const logger = require('../logger')
-const { isWebUri } = require('valid-url')
-
-const bookmarks = require('../store')
+const xss = require('xss')
+const BookmarksService = require('./bookmarks-service')
 
 const bookmarksRouter = express.Router()
-const bodyParser = express.json()
+const jsonParser = express.json()
+
+const serializeBookmark = bookmark => ({
+  id: bookmark.id,
+  style: bookmark.style,
+  title: xss(bookmark.title),
+  content: xss(bookmark.content),
+  date_published: bookmark.date_published,
+})
 
 bookmarksRouter
-  .route('/bookmarks')
-  .get((req, res) => {
-    res.json(bookmarks)  // need to add bookmarks variable
+  .route('/')
+  .get((req, res, next) => {
+    const knexInstance = req.app.get('db')
+    BookmarksService.getAllBookmarks(knexInstance)
+      .then(bookmarks => {
+        res.json(bookmarks.map(serializeBookmark))
+      })
+      .catch(next)
   })
-  .post(bodyParser, (req, res) => {
-    const { title, url, description, rating } = req.body;
+  .post(jsonParser, (req, res, next) => {
+    const { title, content, style } = req.body
+    const newBookmark = { title, content, style }
 
-    if (!title) {
-      logger.error('Title is required');
-      return res
-        .status(400)
-        .send('Invalid data')
-    }
+    for (const [key, value] of Object.entries(newBookmark))
+      if (value == null)
+        return res.status(400).json({
+          error: { message: `Missing '${key}' in request body` }
+        })
 
-    if (!url) {
-      logger.error('URL is required');
-      return res
-        .status(400)
-        .send('Invalid data')
-    }
-
-    if (!description) {
-      logger.error('Description is required')
-      return res
-        .status(400)
-        .send('Invalid data')
-    }
-
-    if (!Number.isInteger(rating) || rating < 0 || rating > 5) {
-      logger.error(`Invalid rating '${rating}' supplied`)
-      return res.status(400).send(`'rating' must be a number between 0 and 5`)
-    }
-
-    if (!isWebUri(url)) {
-      logger.error(`Invalid url '${url}' supplied`)
-      return res.status(400).send(`'url' must be a valid URL`)
-    }
-
-    const id = uuid();
-
-    const bookmark = {
-      id,
-      title,
-      url,
-      description,
-      rating
-    }
-
-    bookmarks.push(bookmark)
-
-    logger.info(`Bookmark with id ${id} created`);
-
-    res
-      .status(201)
-      .location(`https://localhost:8000/bookmarks/${id}`)
-      .json(bookmarks)
+    BookmarksService.insertBookmark(
+      req.app.get('db'),
+      newBookmark
+    )
+      .then(bookmark => {
+        res
+          .status(201)
+          .location(`/bookmarks/${bookmark.id}`)
+          .json(serializeBookmark(bookmark))
+      })
+      .catch(next)
   })
-
 
 bookmarksRouter
-  .route('/bookmarks/:id')
-  .get((req, res) => {
-    const { id } = req.params;
-    const bookmark = bookmarks.find(b => b.id == id);
-
-    if (!bookmark) {
-      logger.error(`Bookmark with id ${id} not found.`)
-      return res
-        .status(404)
-        .send('Bookmark not found')
-    }
-    res.json(bookmark)  // need to add bookmarks variable
-  })
-  .delete((req, res) => {
-    const { id } = req.params;
-
-    const bookmarkIndex = bookmarks.findIndex(bi => bi.id == id)
-
-    if (bookmarkIndex === -1) {
-      logger.error(`Bookmkar with id ${id} not found.`);
-      return res
-        .status(404)
-        .send('Not Found');
-    }
-
-    bookmarks.splice(bookmarkIndex, 1);
-
-    logger.info(`Bookmkark with id ${id} deleted`)
-    res
-      .status(204)
-      .end();
+  .route('/:bookmark_id')
+  .get((req, res, next) => {
+    const knexInstance = req.app.get('db')
+    BookmarksService.getById(knexInstance, req.params.bookmark_id)
+      .then(bookmark => {
+        if (!bookmark) {
+          return res.status(404).json({
+            error: { message: `Bookmark doesn't exist` }
+          })
+        }
+        res.json(serializeBookmark(bookmark))
+      })
+      .catch(next)
   })
 
 module.exports = bookmarksRouter
