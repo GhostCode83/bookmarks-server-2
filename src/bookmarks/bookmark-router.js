@@ -16,7 +16,7 @@ const serializeBookmark = bookmark => ({
 })
 
 bookmarksRouter
-  .route('/bookmarks')
+  .route('/api/bookmarks')
   .get((req, res, next) => {
     BookmarksService.getAllBookmarks(req.app.get('db'))
       .then(bookmarks => {
@@ -62,14 +62,14 @@ bookmarksRouter
         logger.info(`Bookmark with id ${bookmark.id} created.`)
         res
           .status(201)
-          .location(`/bookmarks/${bookmark.id}`)
+          .location(`/api/bookmarks/${bookmark.id}`)
           .json(serializeBookmark(bookmark))
       })
       .catch(next)
   })
 
 bookmarksRouter
-  .route('/bookmarks/:bookmark_id')
+  .route('/api/bookmarks/:bookmark_id')
   .all((req, res, next) => {
     const { bookmark_id } = req.params
     BookmarksService.getById(req.app.get('db'), bookmark_id)
@@ -100,5 +100,6 @@ bookmarksRouter
       })
       .catch(next)
   })
+
 
 module.exports = bookmarksRouter
