@@ -314,12 +314,13 @@ describe('Bookmarks Endpoints', () => {
     })
   })
 
-  describe.only(`PATCH /api/bookmarks/:id`, () => {
+  describe(`PATCH /api/bookmarks/:id`, () => {
     context(`Given no bookmarks`, () => {
       it(`responds with 404`, () => {
         const bookmarkId = 123456
         return supertest(app)
           .patch(`api/bookmarks/${bookmarkId}`)
+          .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
           .expect(404, { error: { message: `Bookmark doesn't exist` } })
       })
     })
