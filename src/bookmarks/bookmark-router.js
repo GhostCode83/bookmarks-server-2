@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express')
 const { isWebUri } = require('valid-url')
 const xss = require('xss')
@@ -62,7 +63,7 @@ bookmarksRouter
         logger.info(`Bookmark with id ${bookmark.id} created.`)
         res
           .status(201)
-          .location(`/api/bookmarks/${bookmark.id}`)
+          .location(path.posix.join(req.originalUrl, `/${bookmark.id}`))
           .json(serializeBookmark(bookmark))
       })
       .catch(next)

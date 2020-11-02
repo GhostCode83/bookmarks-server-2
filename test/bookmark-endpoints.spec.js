@@ -199,12 +199,12 @@ describe('Bookmarks Endpoints', () => {
   describe('POST /api/bookmarks', () => {
     it(`responds with 400 missing 'title' if not supplied`, () => {
       const newBookmarkMissingTitle = {
-        // title: 'test-title',
+        title: 'test-title',
         url: 'https://test.com',
         rating: 1,
       }
       return supertest(app)
-        .post(`/api/bookmarks`)
+        .post(`/api/bookmarks/`)
         .send(newBookmarkMissingTitle)
         .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
         .expect(400, {
